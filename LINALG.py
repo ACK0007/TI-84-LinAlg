@@ -26,6 +26,7 @@ def normalized(vec: list):
 
 def theta(vec1: list, vec2: list):
     return math.acos(dot_product(vec1,vec2)/(norm(vec1)*norm(vec2)))*180/math.pi
+<<<<<<< HEAD:LinAlg.py
 
 def cross_product(vec1: list, vec2: list):
     return [vec1[1]*vec2[2]-vec2[1]*vec1[2], vec1[2]*vec2[0]-vec2[2]*vec1[0], vec1[0]*vec2[1]-vec2[0]*vec1[1]]
@@ -48,3 +49,5 @@ while not escape(): # type: ignore
             print(normalized(v1), "\n", normalized(v2))
     elif choice == 5:
             print(theta(v1), "\n", theta(v2))
+=======
+>>>>>>> 360a33d6197eb55c7302d183dbbac7d220146b26:LINALG.py
