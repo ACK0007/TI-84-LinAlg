@@ -1,4 +1,4 @@
-#from ti_python_module import ti_system as ts
+from ti_system import * # type: ignore
 import math
 
 x1 = float(input("x1= "))
@@ -26,3 +26,26 @@ def normalized(vec: list):
 
 def theta(vec1: list, vec2: list):
     return math.acos(dot_product(vec1,vec2)/(norm(vec1)*norm(vec2)))*180/math.pi
+
+def cross_product(vec1: list, vec2: list):
+    return [vec1[1]*vec2[2]-vec2[1]*vec1[2], vec1[2]*vec2[0]-vec2[2]*vec1[0], vec1[0]*vec2[1]-vec2[0]*vec1[1]]
+
+while not escape(): # type: ignore
+    print("1) dot product")
+    print("2) cross product")
+    print("3) norm")
+    print("4) normalize")
+    print("5) theta")
+    
+    choice = input("Pick one of the above")
+    match choice:
+        case 1:
+            print(dot_product(v1, v2))
+        case 2:
+            print(cross_product(v1, v2))
+        case 3:
+            print(norm(v1), "\n", norm(v2))
+        case 4:
+            print(normalized(v1), "\n", normalized(v2))
+        case 5:
+            print(theta(v1), "\n", theta(v2))
