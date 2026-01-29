@@ -1,6 +1,38 @@
 from ti_system import * # type: ignore
 import math
 
+class vector():
+    def __init__(self, x: float, y: float, z: float):
+        self.x = x
+        self.y = y
+        self.z = z
+    
+    def norm(self):
+        return math.sqrt(self.x^2 + self.y^2 + self.z^2)
+    
+    def normalized(self):
+        n = self.norm()
+        return vector(self.x/n, self.y/n, self.z/n)
+    
+    def __add__(self, other):
+        if isinstance(other, vector):
+            return vector(self.x + other.x, self.y + other.y, self.z + other.z)
+        else:
+            raise TypeError("Unsupported operand type(s) for +")
+    
+    def __sub__(self, other):
+        if isinstance(other, vector):
+            return vector(self.x - other.x, self.y - other.y, self.z - other.z)
+        else:
+            raise TypeError("Unsupported operand type(s) for -")
+        
+    def __mul__(self, other):
+        return self.x*other.x + self.z*other.y + self.z*other.z
+    
+    
+        
+        
+        
 x1 = float(input("x1= "))
 y1 = float(input("y1= "))
 z1 = float(input("z1= "))
@@ -47,4 +79,4 @@ while not escape(): # type: ignore
     elif choice == 4:
             print(normalized(v1), "\n", normalized(v2))
     elif choice == 5:
-            print(theta(v1,v2))
+            print(theta(v1, v2))
