@@ -36,16 +36,15 @@ while not escape(): # type: ignore
     print("3) norm")
     print("4) normalize")
     print("5) theta")
-    
-    choice = input("Pick one of the above")
-    match choice:
-        case 1:
-            print(dot_product(v1, v2))
-        case 2:
-            print(cross_product(v1, v2))
-        case 3:
-            print(norm(v1), "\n", norm(v2))
-        case 4:
+
+    choice = int(input("Pick one of the above"))
+    if choice == 1:
+        print(dot_product(v1, v2))
+    elif choice == 2:
+        print(cross_product(v1, v2))
+    elif choice == 3 :
+        print(norm(v1), "\n", norm(v2))
+    elif choice == 4:
             print(normalized(v1), "\n", normalized(v2))
-        case 5:
+    elif choice == 5:
             print(theta(v1), "\n", theta(v2))
