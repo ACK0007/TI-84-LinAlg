@@ -18,15 +18,14 @@ def dot_product(vec1: list, vec2: list):
     return s
 
 def norm(vec: list):
-    return math.sqrt(sum(dot_product(vec,vec)))
+    return math.sqrt(dot_product(vec,vec))
 
 def normalized(vec: list):
-    norm = norm(vec)
-    return map(lambda x: x*1/norm, vec)
+    n = norm(vec)
+    return list(map(lambda x: x*1/n, vec))
 
 def theta(vec1: list, vec2: list):
     return math.acos(dot_product(vec1,vec2)/(norm(vec1)*norm(vec2)))*180/math.pi
-<<<<<<< HEAD:LinAlg.py
 
 def cross_product(vec1: list, vec2: list):
     return [vec1[1]*vec2[2]-vec2[1]*vec1[2], vec1[2]*vec2[0]-vec2[2]*vec1[0], vec1[0]*vec2[1]-vec2[0]*vec1[1]]
@@ -38,7 +37,7 @@ while not escape(): # type: ignore
     print("4) normalize")
     print("5) theta")
 
-    choice = int(input("Pick one of the above"))
+    choice = int(input("Pick one of the above \n"))
     if choice == 1:
         print(dot_product(v1, v2))
     elif choice == 2:
@@ -48,6 +47,4 @@ while not escape(): # type: ignore
     elif choice == 4:
             print(normalized(v1), "\n", normalized(v2))
     elif choice == 5:
-            print(theta(v1), "\n", theta(v2))
-=======
->>>>>>> 360a33d6197eb55c7302d183dbbac7d220146b26:LINALG.py
+            print(theta(v1,v2))
