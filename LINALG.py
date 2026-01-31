@@ -33,7 +33,7 @@ class vector():
             return vector(other*self.x, other*self.y, other*self.z)
     
 class node():
-    def __init__(self, contents: str, parent: node|None, left_child: node|None, right_child: node|None):
+    def __init__(self, contents: str, parent: node|None = None, left_child: node|None = None, right_child: node|None = None):
         try:
             self.contents = float(contents)
         except:
@@ -46,30 +46,98 @@ class node():
 class equation():
     def __init__(self, eqn: str):
         self.eqn = eqn
-        self.operations = ["=", "+", "-", "*" ,"x"]
+        self.operations = {
+            1: ["="],
+            2: ["+", "-"],
+            3: ["*", "x", "/"]
+            }
         self.tree = None
+        self.operation_indices = []
+        self.find_operation_indices()
         self.make_tree()
     
+    def find_operation_indices(self):
+        for i in range(len(self.eqn)):
+            if self.eqn[i] in self.operations[1]:
+                self.operation_indices.append((i,1))
+            elif self.eqn[i] in self.operations[2]:
+                self.operation_indices.append((i,2))
+            elif self.eqn[i] in self.operations[3]:
+                self.operation_indices.append((i,3))
+            self.operation_indices.reverse()
+                
+                
     def make_tree(self):
-        i = 0
+        for i,j in self.operation_indices:
+            if j == 1:
+                self.tree = node(self.eqn[i], None, None, None)
+                print(self.eqn[:i])
+                print(self.eqn[i+1:])
+
+                self.make_nodes(self.eqn, self.tree, 'l', (0,i))
+                self.make_nodes(self.eqn, self.tree, 'r', (i+1,len(self.eqn)))
+                break
+        """
+        i = len(self.eqn) - 1
         while not self.eqn[i] in self.operations:
-            i += 1
+            i -= 1
         self.tree = node(self.eqn[i], None, None, None)
         self.make_nodes(self.eqn[:i], self.tree, 'l')
         self.make_nodes(self.eqn[i+1:], self.tree, 'r')
+        """
         
-    def contains_operation(self, partial_equation: str):
-        for o in self.operations:
-            if o in partial_equation:
-                return True
-        return False
+    
         
-    def make_nodes(self, partial_equation: str, parent: node, direction: str):
+    def make_nodes(self, partial_equation: str, parent: node, direction: str, indices: tuple):
+        
+        assert direction in {'l', 'r'}
+        operation_indices = list(filter(lambda x: indices[0] <= x[0] < indices[1] and x[1] != 1, self.operation_indices))
+        
+        if len(operation_indices) == 0:
+            n = node(self.eqn[indices[0]:indices[1]], parent, None, None)
+            if direction == 'l':
+                parent.left_child = n
+            elif direction == 'r':
+                parent.right_child = n
+            return
+        print(partial_equation[indices[0]:indices[1]])
+        max_op_precedent = 3
+        for o in operation_indices:
+            if o[1] == 2:
+                max_op_precedent = 2
+                break
+                  
+        for i,j in operation_indices:
+            if j == max_op_precedent:
+                
+                n = node(self.eqn[i], parent, None, None)
+                
+                if direction == 'l':
+                    parent.left_child = n
+                elif direction == 'r':
+                    parent.right_child = n
+                    
+                if self.contains_operation(self.eqn[indices[0]:i]):
+                    self.make_nodes(self.eqn, n, 'l', (indices[0],i))
+                else:
+                    m = node(self.eqn[indices[0]:i], n, None, None)
+                    n.left_child = m
+                
+                if self.contains_operation(self.eqn[i+1:indices[1]]):
+                    self.make_nodes(self.eqn[i+1:indices[1]], n, 'r', (i+1,indices[1]))
+                else:
+                    m = node(self.eqn[i+1:indices[1]], n, None, None)
+                    n.right_child = m
+                    
+                break
+
+        
+        '''
         assert direction in {'l', 'r'}
         if self.contains_operation(partial_equation):
-            i = 0
+            i = len(partial_equation)-1
             while not partial_equation[i] in self.operations:
-                i += 1
+                i -= 1
                 
             n = node(partial_equation[i], parent, None, None)
             if direction == 'l':
@@ -81,41 +149,52 @@ class equation():
                 self.make_nodes(partial_equation[:i], n, 'l')
             else:
                 m = node(partial_equation[:i], n, None, None)
-                n.right_child = m
+                n.left_child = m
             
             if self.contains_operation(partial_equation[i+1:]):
                 self.make_nodes(partial_equation[i+1:], n, 'r')
             else:
                 m = node(partial_equation[i+1:], n, None, None)
-                n.left_child = m
+                n.right_child = m
         else:
             n = node(partial_equation, parent, None, None)
             if direction == 'l':
                 parent.left_child = n
             elif direction == 'r':
                 parent.right_child = n
+        '''
         
         
+    def contains_operation(self, partial_equation: str):
+        ops = []
+        for j in self.operations.values():
+            for i in j:
+                ops.append(i)
+        for o in ops:
+            if o in partial_equation:
+                return True
+        return False
        
     def print_value(self, starting_node: node):
         string = ''
-        if starting_node.left_child != None:
-            string += self.print_value(starting_node.left_child)
-        print(string)
-        string += str(starting_node.contents)
-        print(string)
-        if starting_node.right_child != None:
-            string += self.print_value(starting_node.right_child)
-        print(string)
+        if starting_node != None:
+            print(f"Node: {starting_node.contents}\nParent: {None if starting_node.parent is None else starting_node.parent.contents}\nLeft Child: {None if starting_node.left_child is None else starting_node.left_child.contents}\nRight Child: {None if starting_node.right_child is None else starting_node.right_child.contents}\n\n ")
+            if starting_node.left_child != None:
+                string += self.print_value(starting_node.left_child)
+            string += str(starting_node.contents)
+            if starting_node.right_child != None:
+                string += self.print_value(starting_node.right_child)
         return string
 
        
     def __repr__(self):
         return self.print_value(self.tree)
         
-eqn = equation("2*3+1")
+eqn = equation("7=2*3+1")
 print(eqn)
-        
+eqn = equation("AB*AD/4")
+#print(eqn)
+
         
 
 
