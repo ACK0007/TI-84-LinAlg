@@ -42,6 +42,9 @@ class node():
         self.parent = parent
         self.right_child = right_child
         self.left_child = left_child
+        
+    def __repr__(self):
+        return str(self.contents)
 
 class equation():
     def __init__(self, eqn: str):
@@ -71,24 +74,13 @@ class equation():
         for i,j in self.operation_indices:
             if j == 1:
                 self.tree = node(self.eqn[i], None, None, None)
-                print(self.eqn[:i])
-                print(self.eqn[i+1:])
-
-                self.make_nodes(self.eqn, self.tree, 'l', (0,i))
-                self.make_nodes(self.eqn, self.tree, 'r', (i+1,len(self.eqn)))
+                self.make_nodes(self.tree, 'l', (0,i))
+                self.make_nodes(self.tree, 'r', (i+1,len(self.eqn)))
                 break
-        """
-        i = len(self.eqn) - 1
-        while not self.eqn[i] in self.operations:
-            i -= 1
-        self.tree = node(self.eqn[i], None, None, None)
-        self.make_nodes(self.eqn[:i], self.tree, 'l')
-        self.make_nodes(self.eqn[i+1:], self.tree, 'r')
-        """
         
     
         
-    def make_nodes(self, partial_equation: str, parent: node, direction: str, indices: tuple):
+    def make_nodes(self, parent: node, direction: str, indices: tuple):
         
         assert direction in {'l', 'r'}
         operation_indices = list(filter(lambda x: indices[0] <= x[0] < indices[1] and x[1] != 1, self.operation_indices))
@@ -100,7 +92,7 @@ class equation():
             elif direction == 'r':
                 parent.right_child = n
             return
-        print(partial_equation[indices[0]:indices[1]])
+
         max_op_precedent = 3
         for o in operation_indices:
             if o[1] == 2:
@@ -118,52 +110,19 @@ class equation():
                     parent.right_child = n
                     
                 if self.contains_operation(self.eqn[indices[0]:i]):
-                    self.make_nodes(self.eqn, n, 'l', (indices[0],i))
+                    self.make_nodes(n, 'l', (indices[0],i))
                 else:
                     m = node(self.eqn[indices[0]:i], n, None, None)
                     n.left_child = m
                 
                 if self.contains_operation(self.eqn[i+1:indices[1]]):
-                    self.make_nodes(self.eqn[i+1:indices[1]], n, 'r', (i+1,indices[1]))
+                    self.make_nodes(n, 'r', (i+1,indices[1]))
                 else:
                     m = node(self.eqn[i+1:indices[1]], n, None, None)
                     n.right_child = m
                     
                 break
 
-        
-        '''
-        assert direction in {'l', 'r'}
-        if self.contains_operation(partial_equation):
-            i = len(partial_equation)-1
-            while not partial_equation[i] in self.operations:
-                i -= 1
-                
-            n = node(partial_equation[i], parent, None, None)
-            if direction == 'l':
-                parent.left_child = n
-            elif direction == 'r':
-                parent.right_child = n
-            
-            if self.contains_operation(partial_equation[:i]):
-                self.make_nodes(partial_equation[:i], n, 'l')
-            else:
-                m = node(partial_equation[:i], n, None, None)
-                n.left_child = m
-            
-            if self.contains_operation(partial_equation[i+1:]):
-                self.make_nodes(partial_equation[i+1:], n, 'r')
-            else:
-                m = node(partial_equation[i+1:], n, None, None)
-                n.right_child = m
-        else:
-            n = node(partial_equation, parent, None, None)
-            if direction == 'l':
-                parent.left_child = n
-            elif direction == 'r':
-                parent.right_child = n
-        '''
-        
         
     def contains_operation(self, partial_equation: str):
         ops = []
@@ -178,7 +137,7 @@ class equation():
     def print_value(self, starting_node: node):
         string = ''
         if starting_node != None:
-            print(f"Node: {starting_node.contents}\nParent: {None if starting_node.parent is None else starting_node.parent.contents}\nLeft Child: {None if starting_node.left_child is None else starting_node.left_child.contents}\nRight Child: {None if starting_node.right_child is None else starting_node.right_child.contents}\n\n ")
+            print(f"Node: {starting_node}\nParent: {starting_node.parent}\nLeft Child: {starting_node.left_child}\nRight Child: {starting_node.right_child}\n\n ")
             if starting_node.left_child != None:
                 string += self.print_value(starting_node.left_child)
             string += str(starting_node.contents)
@@ -192,8 +151,8 @@ class equation():
         
 eqn = equation("7=2*3+1")
 print(eqn)
-eqn = equation("AB*AD/4")
-#print(eqn)
+eqn = equation("z=AB*AD/4")
+print(eqn)
 
         
 
