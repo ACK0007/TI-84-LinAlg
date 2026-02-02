@@ -174,12 +174,30 @@ class equation():
     def __repr__(self):
         return self.print_value(self.tree)
         
-eqn = equation("7=2*3+1")
+        
+class environment():
+    def __init__(self):
+        self.vars = {}
+        
+    def add_equation(self, eq: equation):
+        for i,j in eq.vars.items():
+            if i not in self.vars.keys():
+                self.vars[i] = j
+    
+    def __repr__(self):
+        return str(self.vars)
+        
+        
+e = environment()
+eqn = equation("r=2*3+1")
+e.add_equation(eqn)
 print(eqn)
 print(eqn.vars)
 eqn = equation("z=AB*AD/4")
+e.add_equation(eqn)
 print(eqn)
 print(eqn.vars)
+print(e)
 
 v=vector(1,2,3)
 k=vector(4,5,6)
