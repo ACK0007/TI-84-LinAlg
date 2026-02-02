@@ -8,7 +8,7 @@ class vector():
         self.z = z
     
     def norm(self):
-        return math.sqrt(self.x^2 + self.y^2 + self.z^2)
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
     
     def normalized(self):
         n = self.norm()
@@ -31,6 +31,22 @@ class vector():
             return self.x*other.x + self.z*other.y + self.z*other.z
         elif isinstance(other, float):
             return vector(other*self.x, other*self.y, other*self.z)
+        elif isinstance(other, int):
+            other = float(other)
+            return self*other
+        
+    def __truediv__(self, other: float):
+        return self*(1/other)
+    
+    def __repr__(self):
+        return f"<{self.x},{self.y},{self.z}>"
+        
+        
+    def cross_product(self, other: vector):
+        return vector(self.y*other.z-other.y*self.z, self.z*other.x-other.z*self.x, self.x*other.y-other.x*self.y)
+    
+    def theta(self, other: vector):
+        return math.acos(self*other/self.norm(self)*self.norm(other))*180/math.pi
     
 class node():
     def __init__(self, contents: str, parent: node|None = None, left_child: node|None = None, right_child: node|None = None):
@@ -54,6 +70,7 @@ class equation():
             2: ["+", "-"],
             3: ["*", "x", "/"]
             }
+        self.vars = {}
         self.tree = None
         self.operation_indices = []
         self.find_operation_indices()
@@ -87,6 +104,10 @@ class equation():
         
         if len(operation_indices) == 0:
             n = node(self.eqn[indices[0]:indices[1]], parent, None, None)
+            
+            if isinstance(n.contents,str):
+                self.vars[n.contents] = None
+                
             if direction == 'l':
                 parent.left_child = n
             elif direction == 'r':
@@ -114,12 +135,16 @@ class equation():
                 else:
                     m = node(self.eqn[indices[0]:i], n, None, None)
                     n.left_child = m
+                    if isinstance(m.contents,str):
+                        self.vars[m.contents] = None
                 
                 if self.contains_operation(self.eqn[i+1:indices[1]]):
                     self.make_nodes(n, 'r', (i+1,indices[1]))
                 else:
                     m = node(self.eqn[i+1:indices[1]], n, None, None)
                     n.right_child = m
+                    if isinstance(m.contents,str):
+                        self.vars[m.contents] = None
                     
                 break
 
@@ -151,30 +176,23 @@ class equation():
         
 eqn = equation("7=2*3+1")
 print(eqn)
+print(eqn.vars)
 eqn = equation("z=AB*AD/4")
 print(eqn)
+print(eqn.vars)
 
-        
+v=vector(1,2,3)
+k=vector(4,5,6)
+print(v.x,v.y,v.z)
+print(v.norm())
+print(v.normalized())
+print(v*k)
+print(v*2)
+print(v.cross_product(k))
+print(v/2)
 
 
-def dot_product(vec1: list, vec2: list):
-    s = 0
-    for i,j in zip(vec1,vec2):
-        s += i*j
-    return s
 
-def norm(vec: list):
-    return math.sqrt(dot_product(vec,vec))
-
-def normalized(vec: list):
-    n = norm(vec)
-    return list(map(lambda x: x*1/n, vec))
-
-def theta(vec1: list, vec2: list):
-    return math.acos(dot_product(vec1,vec2)/(norm(vec1)*norm(vec2)))*180/math.pi
-
-def cross_product(vec1: list, vec2: list):
-    return [vec1[1]*vec2[2]-vec2[1]*vec1[2], vec1[2]*vec2[0]-vec2[2]*vec1[0], vec1[0]*vec2[1]-vec2[0]*vec1[1]]
 
 '''
 while not escape(): # type: ignore
