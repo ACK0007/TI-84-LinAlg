@@ -34,12 +34,14 @@ class vector():
         elif isinstance(other, int):
             other = float(other)
             return self*other
+        else:
+            raise TypeError("Unsupported operand type(s) for *")
         
     def __truediv__(self, other: float):
         return self*(1/other)
     
     def __repr__(self):
-        return f"<{self.x},{self.y},{self.z}>"
+        return f"〈{self.x},{self.y},{self.z}〉"
         
         
     def cross_product(self, other: vector):
@@ -86,7 +88,7 @@ class equation():
                 self.operation_indices.append((i,3))
             self.operation_indices.reverse()
                 
-                
+                     
     def make_tree(self):
         for i,j in self.operation_indices:
             if j == 1:
@@ -95,7 +97,6 @@ class equation():
                 self.make_nodes(self.tree, 'r', (i+1,len(self.eqn)))
                 break
         
-    
         
     def make_nodes(self, parent: node, direction: str, indices: tuple):
         
@@ -159,6 +160,7 @@ class equation():
                 return True
         return False
        
+       
     def print_value(self, starting_node: node):
         string = ''
         if starting_node != None:
@@ -177,12 +179,59 @@ class equation():
         
 class environment():
     def __init__(self):
+        self.equations = []
         self.vars = {}
+        self.operations = {
+            "+": lambda a,b: a+b,
+            "-": lambda a,b: a-b,
+            "*": lambda a,b: a*b,
+            "/": lambda a,b: a/b
+        }
         
-    def add_equation(self, eq: equation):
-        for i,j in eq.vars.items():
+        
+    def add_equation(self, eqn: equation):
+        self.equations.append(eqn)
+        self.add_variables(eqn)
+        self.evaluate_equation(eqn)
+        
+        
+    def add_variables(self, eqn: equation):
+        for i,j in eqn.vars.items():
             if i not in self.vars.keys():
                 self.vars[i] = j
+                
+                
+    def has_children(self, node: node):
+        try:
+            print(f'{node}: {node.left_child is None and node.right_child is None}')
+            return not (node.left_child is None and node.right_child is None)
+        except:
+            return False
+    
+    
+    def evaluate_expression(self, expr: node):
+        #print(expr)
+        if not self.has_children(expr):
+            return expr.contents
+        
+        if self.has_children(expr.left_child) and self.has_children(expr.right_child):
+            print(1)
+            return self.operations[expr.contents](self.evaluate_expression(expr.left_child),self.evaluate_expression(expr.right_child))
+        elif self.has_children(expr.left_child) and not self.has_children(expr.right_child):
+            print(2)
+            return self.operations[expr.contents](self.evaluate_expression(expr.left_child),expr.right_child.contents)
+        elif not self.has_children(expr.left_child) and self.has_children(expr.right_child):
+            print(3)
+            return self.operations[expr.contents](expr.left_child,self.evaluate_expression(expr.right_child.contents))
+        elif not self.has_children(expr.left_child) and not self.has_children(expr.right_child):
+            print(4)
+            return self.operations[expr.contents](expr.left_child.contents,expr.right_child.contents)
+        
+        
+    def evaluate_equation(self, eqn: equation):
+        rhs = self.evaluate_expression(eqn.tree.right_child)
+        self.vars[eqn.tree.left_child.contents] = rhs
+    
     
     def __repr__(self):
         return str(self.vars)
@@ -191,44 +240,10 @@ class environment():
 e = environment()
 eqn = equation("r=2*3+1")
 e.add_equation(eqn)
-print(eqn)
-print(eqn.vars)
-eqn = equation("z=AB*AD/4")
-e.add_equation(eqn)
-print(eqn)
-print(eqn.vars)
+eqn2 = equation('AB=8')
+e.add_equation(eqn2)
+eqn3 = equation('AD=3')
+e.add_equation(eqn3)
+#eqn4 = equation("z=AB*AD/4")
+#e.add_equation(eqn4)
 print(e)
-
-v=vector(1,2,3)
-k=vector(4,5,6)
-print(v.x,v.y,v.z)
-print(v.norm())
-print(v.normalized())
-print(v*k)
-print(v*2)
-print(v.cross_product(k))
-print(v/2)
-
-
-
-
-'''
-while not escape(): # type: ignore
-    print("1) dot product")
-    print("2) cross product")
-    print("3) norm")
-    print("4) normalize")
-    print("5) theta")
-
-    choice = int(input("Pick one of the above \n"))
-    if choice == 1:
-        print(dot_product(v1, v2))
-    elif choice == 2:
-        print(cross_product(v1, v2))
-    elif choice == 3 :
-        print(norm(v1), "\n", norm(v2))
-    elif choice == 4:
-            print(normalized(v1), "\n", normalized(v2))
-    elif choice == 5:
-            print(theta(v1, v2))
-'''
