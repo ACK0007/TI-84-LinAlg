@@ -202,29 +202,35 @@ class environment():
                 
                 
     def has_children(self, node: node):
+        print(node)
+        print(node.contents)
         try:
             print(f'{node}: {node.left_child is None and node.right_child is None}')
             return not (node.left_child is None and node.right_child is None)
         except:
+            print(f'{node}: {False}')
             return False
     
     
     def evaluate_expression(self, expr: node):
-        #print(expr)
+        print(expr)
+        print(type(expr))
         if not self.has_children(expr):
-            return expr.contents
+            if isinstance(expr.contents, str):
+                try:
+                    return self.vars[expr.contents]
+                except:
+                    return expr.contents
+            else:
+                return expr.contents
         
         if self.has_children(expr.left_child) and self.has_children(expr.right_child):
-            print(1)
             return self.operations[expr.contents](self.evaluate_expression(expr.left_child),self.evaluate_expression(expr.right_child))
         elif self.has_children(expr.left_child) and not self.has_children(expr.right_child):
-            print(2)
             return self.operations[expr.contents](self.evaluate_expression(expr.left_child),expr.right_child.contents)
         elif not self.has_children(expr.left_child) and self.has_children(expr.right_child):
-            print(3)
             return self.operations[expr.contents](expr.left_child,self.evaluate_expression(expr.right_child.contents))
         elif not self.has_children(expr.left_child) and not self.has_children(expr.right_child):
-            print(4)
             return self.operations[expr.contents](expr.left_child.contents,expr.right_child.contents)
         
         
@@ -244,6 +250,7 @@ eqn2 = equation('AB=8')
 e.add_equation(eqn2)
 eqn3 = equation('AD=3')
 e.add_equation(eqn3)
-#eqn4 = equation("z=AB*AD/4")
-#e.add_equation(eqn4)
+eqn4 = equation("z=AB*AD/4")
+print(eqn4)
+e.add_equation(eqn4)
 print(e)
