@@ -37,12 +37,14 @@ class vector():
         else:
             raise TypeError("Unsupported operand type(s) for *")
         
+    def __rmul__(self, other):
+        return self.__mul__(other)
+        
     def __truediv__(self, other: float):
         return self*(1/other)
     
     def __repr__(self):
-        return f"〈{self.x},{self.y},{self.z}〉"
-        
+        return f"{{{self.x},{self.y},{self.z}}}"
         
     def cross_product(self, other: vector):
         return vector(self.y*other.z-other.y*self.z, self.z*other.x-other.z*self.x, self.x*other.y-other.x*self.y)
@@ -51,7 +53,7 @@ class vector():
         return math.acos(self*other/self.norm(self)*self.norm(other))*180/math.pi
     
 class node():
-    def __init__(self, contents: str, parent: node|None = None, left_child: node|None = None, right_child: node|None = None):
+    def __init__(self, contents: str|vector, parent: node|None = None, left_child: node|None = None, right_child: node|None = None):
         try:
             self.contents = float(contents)
         except:
@@ -104,11 +106,16 @@ class equation():
         operation_indices = list(filter(lambda x: indices[0] <= x[0] < indices[1] and x[1] != 1, self.operation_indices))
         
         if len(operation_indices) == 0:
-            n = node(self.eqn[indices[0]:indices[1]], parent, None, None)
-            
-            if isinstance(n.contents,str):
-                self.vars[n.contents] = None
+            if self.is_vector(self.eqn[indices[0]:indices[1]]):
+                coords = self.find_coord(self.eqn[indices[0]:indices[1]])
+                v = vector(coords[0], coords[1], coords[2])
+                n = node(v, parent, None, None)
+            else:
+                n = node(self.eqn[indices[0]:indices[1]], parent, None, None)
                 
+                if isinstance(n.contents,str):
+                    self.vars[n.contents] = None
+                    
             if direction == 'l':
                 parent.left_child = n
             elif direction == 'r':
@@ -159,7 +166,14 @@ class equation():
             if o in partial_equation:
                 return True
         return False
+    
+    def is_vector(self, partial_equation: str):
+        return partial_equation[0] == "{" and partial_equation[-1] == "}" and partial_equation.count(",") == 2
        
+    def find_coord(self, vector: str):
+        vector = vector.strip("{").strip("}")
+        components = vector.split(",")
+        return list(map(lambda x: float(x), components))
        
     def print_value(self, starting_node: node):
         string = ''
@@ -239,4 +253,8 @@ eqn4 = equation("z=AB*AD/4")
 e.add_equation(eqn4)
 eqn5 = equation("b=5+4*7+AD")
 e.add_equation(eqn5)
+eqn6 = equation("y={1,2,3}")
+e.add_equation(eqn6)
+eqn7 = equation("a=2*y")
+e.add_equation(eqn7)
 print(e)
