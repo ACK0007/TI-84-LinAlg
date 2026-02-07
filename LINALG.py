@@ -7,12 +7,14 @@ class vector():
         self.y = y
         self.z = z
     
-    def norm(self):
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
+    @classmethod
+    def norm(cls, v: vector):
+        return math.sqrt(v.x**2 + v.y**2 + v.z**2)
     
-    def normalized(self):
-        n = self.norm()
-        return vector(self.x/n, self.y/n, self.z/n)
+    @classmethod
+    def normalized(cls, v: vector):
+        n = cls.norm(v)
+        return vector(v.x/n, v.y/n, v.z/n)
     
     def __add__(self, other):
         if isinstance(other, vector):
@@ -46,25 +48,30 @@ class vector():
     def __repr__(self):
         return f"{{{self.x},{self.y},{self.z}}}"
         
-    def cross_product(self, other: vector):
-        return vector(self.y*other.z-other.y*self.z, self.z*other.x-other.z*self.x, self.x*other.y-other.x*self.y)
+    @classmethod    
+    def cross_product(cls, v1: vector, v2: vector):
+        return vector(v1.y*v2.z-v2.y*v1.z, v1.z*v2.x-v2.z*v1.x, v1.x*v2.y-v2.x*v1.y)
     
-    def theta(self, other: vector):
-        return math.acos(self*other/self.norm(self)*self.norm(other))*180/math.pi
+    @classmethod
+    def theta(cls, v1: vector, v2: vector):
+        return math.acos(v1*v2/(cls.norm(v1)*cls.norm(v2)))*180/math.pi
     
 class node():
-    def __init__(self, contents: str|vector, parent: node|None = None, left_child: node|None = None, right_child: node|None = None):
+    def __init__(self, contents: str|vector, parent: node|None = None):
         try:
             self.contents = float(contents)
         except:
             self.contents = contents
             
         self.parent = parent
-        self.right_child = right_child
-        self.left_child = left_child
+        self.right_child = None
+        self.left_child = None
+        self.center_child = None
+        
         
     def __repr__(self):
         return str(self.contents)
+
 
 class equation():
     def __init__(self, eqn: str):
@@ -72,8 +79,9 @@ class equation():
         self.operations = {
             1: ["="],
             2: ["+", "-"],
-            3: ["*", "x", "/"]
+            3: ["*", "X", "/"]
             }
+        self.functions = ["cos", "sin", "acos", "asin", "atan", "n", "nr"]
         self.vars = {}
         self.tree = None
         self.operation_indices = []
@@ -94,24 +102,28 @@ class equation():
     def make_tree(self):
         for i,j in self.operation_indices:
             if j == 1:
-                self.tree = node(self.eqn[i], None, None, None)
+                self.tree = node(self.eqn[i], None)
                 self.make_nodes(self.tree, 'l', (0,i))
                 self.make_nodes(self.tree, 'r', (i+1,len(self.eqn)))
                 break
         
         
     def make_nodes(self, parent: node, direction: str, indices: tuple):
-        
-        assert direction in {'l', 'r'}
+        assert direction in {'l', 'r', 'c'}
         operation_indices = list(filter(lambda x: indices[0] <= x[0] < indices[1] and x[1] != 1, self.operation_indices))
         
         if len(operation_indices) == 0:
             if self.is_vector(self.eqn[indices[0]:indices[1]]):
                 coords = self.find_coord(self.eqn[indices[0]:indices[1]])
                 v = vector(coords[0], coords[1], coords[2])
-                n = node(v, parent, None, None)
+                n = node(v, parent)
+            elif self.is_function(self.eqn[indices[0]:indices[1]]):
+                function = self.eqn[indices[0]:indices[1]].partition("(")[0]
+                n = node(function, parent)
+                m = node(self.eqn[indices[0]+len(function)+1: indices[1]-1], n)
+                n.center_child = m
             else:
-                n = node(self.eqn[indices[0]:indices[1]], parent, None, None)
+                n = node(self.eqn[indices[0]:indices[1]], parent)
                 
                 if isinstance(n.contents,str):
                     self.vars[n.contents] = None
@@ -120,6 +132,8 @@ class equation():
                 parent.left_child = n
             elif direction == 'r':
                 parent.right_child = n
+            elif direction == 'c':
+                parent.center_child = n
             return
 
         max_op_precedent = 3
@@ -131,7 +145,7 @@ class equation():
         for i,j in operation_indices:
             if j == max_op_precedent:
                 
-                n = node(self.eqn[i], parent, None, None)
+                n = node(self.eqn[i], parent)
                 
                 if direction == 'l':
                     parent.left_child = n
@@ -141,7 +155,7 @@ class equation():
                 if self.contains_operation(self.eqn[indices[0]:i]):
                     self.make_nodes(n, 'l', (indices[0],i))
                 else:
-                    m = node(self.eqn[indices[0]:i], n, None, None)
+                    m = node(self.eqn[indices[0]:i], n)
                     n.left_child = m
                     if isinstance(m.contents,str):
                         self.vars[m.contents] = None
@@ -149,11 +163,10 @@ class equation():
                 if self.contains_operation(self.eqn[i+1:indices[1]]):
                     self.make_nodes(n, 'r', (i+1,indices[1]))
                 else:
-                    m = node(self.eqn[i+1:indices[1]], n, None, None)
+                    m = node(self.eqn[i+1:indices[1]], n)
                     n.right_child = m
                     if isinstance(m.contents,str):
                         self.vars[m.contents] = None
-                    
                 break
 
         
@@ -175,15 +188,23 @@ class equation():
         components = vector.split(",")
         return list(map(lambda x: float(x), components))
        
+    def is_function(self, partial_equation: str):
+        for f in self.functions:
+            if partial_equation.startswith(f) and partial_equation.strip(f)[0] == "(" and partial_equation.strip(f)[-1] == ")":
+                return True
+        return False
+       
     def print_value(self, starting_node: node):
         string = ''
         if starting_node != None:
-            print(f"Node: {starting_node}\nParent: {starting_node.parent}\nLeft Child: {starting_node.left_child}\nRight Child: {starting_node.right_child}\n\n ")
+            print(f"Node: {starting_node}\nParent: {starting_node.parent}\nLeft Child: {starting_node.left_child}\nRight Child: {starting_node.right_child}\nCenter Child: {starting_node.center_child}\n\n")
             if starting_node.left_child != None:
                 string += self.print_value(starting_node.left_child)
             string += str(starting_node.contents)
             if starting_node.right_child != None:
                 string += self.print_value(starting_node.right_child)
+            if starting_node.contents != None:
+                string += self.print_value(starting_node.center_child)
         return string
 
        
@@ -199,9 +220,18 @@ class environment():
             "+": lambda a,b: a+b,
             "-": lambda a,b: a-b,
             "*": lambda a,b: a*b,
-            "/": lambda a,b: a/b
+            "/": lambda a,b: a/b,
+            "X": lambda a,b: vector.cross_product(a,b)
         }
-        
+        self.functions = {
+            "cos": lambda a: math.cos(a*math.pi/180),
+            "sin": lambda a: math.sin(a*math.pi/180),
+            "acos": lambda a: math.acos(a)*180/math.pi,
+            "asin": lambda a: math.asin(a)*180/math.pi,
+            "atan": lambda a: math.atan(a)*180/math.pi,
+            "n": lambda a: vector.norm(a),
+            "nr": lambda a: vector.normalized(a)
+        }
         
     def add_equation(self, eqn: equation):
         self.equations.append(eqn)
@@ -221,8 +251,15 @@ class environment():
         except:
             return False
         
+    def is_function(self, node: node):
+        for f in self.functions:
+            if node.contents == f:
+                return True
+        return False
     
     def evaluate_expression(self, expr: node):
+        if self.is_function(expr):
+            return self.functions[expr.contents](expr.center_child.contents)
         
         if not self.has_children(expr):
             try:
@@ -257,4 +294,12 @@ eqn6 = equation("y={1,2,3}")
 e.add_equation(eqn6)
 eqn7 = equation("a=2*y")
 e.add_equation(eqn7)
+eqn8 = equation("c={4,5,6}")
+e.add_equation(eqn8)
+eqn9 = equation("k=cXa")
+e.add_equation(eqn9)
+eqn10 = equation('h=atan(1)')
+e.add_equation(eqn10)
+eqn11 = equation("v=n({1,1,1})")
+e.add_equation(eqn11)
 print(e)
