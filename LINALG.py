@@ -111,19 +111,24 @@ class equation():
     def make_nodes(self, parent: node, direction: str, indices: tuple):
         assert direction in {'l', 'r', 'c'}
         operation_indices = list(filter(lambda x: indices[0] <= x[0] < indices[1] and x[1] != 1, self.operation_indices))
+        index_range = slice(indices[0],indices[1])
         
         if len(operation_indices) == 0:
-            if self.is_vector(self.eqn[indices[0]:indices[1]]):
-                coords = self.find_coord(self.eqn[indices[0]:indices[1]])
+            if self.is_vector(self.eqn[index_range]):
+                coords = self.find_coords(self.eqn[index_range])
                 v = vector(coords[0], coords[1], coords[2])
                 n = node(v, parent)
-            elif self.is_function(self.eqn[indices[0]:indices[1]]):
-                function = self.eqn[indices[0]:indices[1]].partition("(")[0]
+            elif self.is_function(self.eqn[index_range]):
+                function = self.eqn[index_range].partition("(")[0]
                 n = node(function, parent)
-                m = node(self.eqn[indices[0]+len(function)+1: indices[1]-1], n)
+                if self.is_vector(self.eqn[indices[0]+len(function)+1: indices[1]-1]):
+                    coords = self.find_coords(self.eqn[indices[0]+len(function)+1: indices[1]-1])
+                    m = node(vector(coords[0], coords[1], coords[2]), n)
+                else:
+                    m = node(self.eqn[indices[0]+len(function)+1: indices[1]-1], n)
                 n.center_child = m
             else:
-                n = node(self.eqn[indices[0]:indices[1]], parent)
+                n = node(self.eqn[index_range], parent)
                 
                 if isinstance(n.contents,str):
                     self.vars[n.contents] = None
@@ -170,42 +175,42 @@ class equation():
                 break
 
         
-    def contains_operation(self, partial_equation: str):
+    def contains_operation(self, expr: str):
         ops = []
         for j in self.operations.values():
             for i in j:
                 ops.append(i)
         for o in ops:
-            if o in partial_equation:
+            if o in expr:
                 return True
         return False
     
-    def is_vector(self, partial_equation: str):
-        return partial_equation[0] == "{" and partial_equation[-1] == "}" and partial_equation.count(",") == 2
+    def is_vector(self, expr: str):
+        return expr[0] == "{" and expr[-1] == "}" and expr.count(",") == 2
        
-    def find_coord(self, vector: str):
+    def find_coords(self, vector: str):
         vector = vector.strip("{").strip("}")
         components = vector.split(",")
         return list(map(lambda x: float(x), components))
        
-    def is_function(self, partial_equation: str):
+    def is_function(self, expr: str):
         for f in self.functions:
-            if partial_equation.startswith(f) and partial_equation.strip(f)[0] == "(" and partial_equation.strip(f)[-1] == ")":
+            if expr.startswith(f) and expr.strip(f)[0] == "(" and expr.strip(f)[-1] == ")":
                 return True
         return False
        
     def print_value(self, starting_node: node):
+
         string = ''
         if starting_node != None:
             print(f"Node: {starting_node}\nParent: {starting_node.parent}\nLeft Child: {starting_node.left_child}\nRight Child: {starting_node.right_child}\nCenter Child: {starting_node.center_child}\n\n")
-            if starting_node.left_child != None:
-                string += self.print_value(starting_node.left_child)
+            string += self.print_value(starting_node.left_child)
             string += str(starting_node.contents)
-            if starting_node.right_child != None:
-                string += self.print_value(starting_node.right_child)
-            if starting_node.contents != None:
-                string += self.print_value(starting_node.center_child)
+            string += self.print_value(starting_node.right_child)
+            if starting_node.center_child != None:
+                string += f"({self.print_value(starting_node.center_child)})"
         return string
+
 
        
     def __repr__(self):
@@ -259,7 +264,11 @@ class environment():
     
     def evaluate_expression(self, expr: node):
         if self.is_function(expr):
-            return self.functions[expr.contents](expr.center_child.contents)
+            try:
+                return self.functions[expr.contents](self.vars[expr.center_child.contents])
+            except:
+                return self.functions[expr.contents](expr.center_child.contents)
+
         
         if not self.has_children(expr):
             try:
@@ -302,4 +311,9 @@ eqn10 = equation('h=atan(1)')
 e.add_equation(eqn10)
 eqn11 = equation("v=n({1,1,1})")
 e.add_equation(eqn11)
+eqn12 = equation("h=nr({3,4,0})")
+e.add_equation(eqn12)
+eqn13 = equation("l=nr(h)")
+print(eqn13)
+e.add_equation(eqn13)
 print(e)
