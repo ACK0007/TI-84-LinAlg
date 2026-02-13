@@ -283,37 +283,23 @@ class environment():
         rhs = self.evaluate_expression(eqn.tree.right_child)
         self.vars[eqn.tree.left_child.contents] = rhs
     
-    
     def __repr__(self):
-        return str(self.vars)
+        string = '\n'
+        for var, value in self.vars.items():
+            string += f"{var}: {value}\n"
+        return string
         
         
-e = environment()
-eqn = equation("r=2*3+1")
-e.add_equation(eqn)
-eqn2 = equation('AB=8')
-e.add_equation(eqn2)
-eqn3 = equation('AD=3')
-e.add_equation(eqn3)
-eqn4 = equation("z=AB*AD/4")
-e.add_equation(eqn4)
-eqn5 = equation("b=5+4*7+AD")
-e.add_equation(eqn5)
-eqn6 = equation("y={1,2,3}")
-e.add_equation(eqn6)
-eqn7 = equation("a=2*y")
-e.add_equation(eqn7)
-eqn8 = equation("c={4,5,6}")
-e.add_equation(eqn8)
-eqn9 = equation("k=cXa")
-e.add_equation(eqn9)
-eqn10 = equation('h=atan(1)')
-e.add_equation(eqn10)
-eqn11 = equation("v=n({1,1,1})")
-e.add_equation(eqn11)
-eqn12 = equation("h=nr({3,4,0})")
-e.add_equation(eqn12)
-eqn13 = equation("l=nr(h)")
-print(eqn13)
-e.add_equation(eqn13)
-print(e)
+class ui():
+    env = environment()
+    
+    @classmethod
+    def run_ui(cls):
+        i = equation(input("Input an equation: "))
+        while i.eqn != "done":
+            cls.env.add_equation(i)
+            i = equation(input("Input an equation: "))
+        print(cls.env)
+   
+
+ui().run_ui()
